@@ -14,10 +14,10 @@
     {
       "id": "oracle",
       "region": "us-east-1",
-      "username": "root",
+      "username": "user",
       "jdbcDriverJarUri": "s3://jdbc-driver-path/oracle-jdbc/ojdbc6.jar",
       "name": "oracle",
-      "*password": "dod7hfsH",
+      "*password": "****",
       "type": "RdsDatabase",
       "rdsInstanceId": "rdsInstanceId"
     },
@@ -117,9 +117,9 @@
     {
       "id": "postgres",
       "region": "us-east-1",
-      "username": "root",
+      "username": "user",
       "name": "postgres",
-      "*password": "dod7hfsH",
+      "*password": "****",
       "type": "RdsDatabase",
       "rdsInstanceId": "rdsinstance-postgres"
     },
@@ -148,9 +148,9 @@
     {
       "id": "mysql",
       "region": "us-east-1",
-      "username": "root",
+      "username": "user",
       "name": "mysql",
-      "*password": "dod7hfsH",
+      "*password": "****",
       "jdbcProperties": "allowMultiQueries=true",
       "type": "RdsDatabase",
       "rdsInstanceId": "rds-mysql"
@@ -186,10 +186,10 @@
     {
       "region": "us-east-1",
       "id": "sqlserver",
-      "username": "root",
+      "username": "user",
       "jdbcDriverJarUri": "s3://setl-integrationtest-rds/sqljdbc4.jar",
       "name": "sqlserver",
-      "*password": "dod7hfsH",
+      "*password": "****",
       "type": "RdsDatabase",
       "rdsInstanceId": "rds-sqlserver"
     },
