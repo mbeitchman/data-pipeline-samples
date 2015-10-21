@@ -1,0 +1,258 @@
+{
+  "objects": [
+    {
+      "id": "SqlDataNodeSqlserver",
+      "name": "SqlDataNodeSqlserver",
+      "insertQuery": "use test841; insert into #{table} values (?,?)",
+      "table": "testcopy",
+      "selectQuery": "use test841; select * from #{table}",
+      "type": "SqlDataNode",
+      "database": {
+        "ref": "sqlserver"
+      }
+    },
+    {
+      "id": "oracle",
+      "region": "us-east-1",
+      "username": "user",
+      "jdbcDriverJarUri": "s3://jdbc-driver-path/oracle-jdbc/ojdbc6.jar",
+      "name": "oracle",
+      "*password": "****",
+      "type": "RdsDatabase",
+      "rdsInstanceId": "rdsInstanceId"
+    },
+    {
+      "id": "S3InputDataNode",
+      "name": "S3InputDataNode",
+      "directoryPath": "s3://input-bucket/path",
+      "type": "S3DataNode"
+    },
+    {
+      "id": "Default",
+      "scheduleType": "CRON",
+      "failureAndRerunMode": "CASCADE",
+      "schedule": {
+        "ref": "DefaultSchedule1"
+      },
+      "name": "Default",
+      "logUri": "s3://log-bucket/",
+      "role": "DataPipelineDefaultRole",
+      "resourceRole": "DataPipelineDefaultResourceRole"
+    },
+    {
+      "id": "MysqlToOracle",
+      "input": {
+        "ref": "SqlDataNodeMysql"
+      },
+      "name": "MysqlToOracle",
+      "workerGroup" : "orclcopy", 
+      "dependsOn": [
+        {
+          "ref": "S3ToMysql"
+        },
+        {
+          "ref": "oracleQueryActivity"
+        }
+      ],
+      "output": {
+        "ref": "SqlDataNodeOracle"
+      },
+      "type": "CopyActivity"
+    },
+    {
+      "id": "mysqlQueryActivity",
+      "name": "mysqlQueryActivity",
+      "workerGroup" : "orclcopy", 
+      "type": "SqlActivity",
+      "script": "drop table if exists testcopy; create table testcopy (col1 varchar(64), col2 varchar(64))",
+      "database": {
+        "ref": "mysql"
+      }
+    },
+    {
+      "id": "SqlDataNodeOracle",
+      "insertQuery": "insert into #{table} values (?,?)",
+      "name": "SqlDataNodeOracle",
+      "table": "testcopy",
+      "selectQuery": "select * from #{table}",
+      "type": "SqlDataNode",
+      "database": {
+        "ref": "oracle"
+      }
+    },
+    {
+      "id": "SqlDataNodeMysql",
+      "name": "SqlDataNodeMysql",
+      "insertQuery": "insert into #{table} values (?,?)",
+      "table": "testcopy",
+      "selectQuery": "select * from #{table}",
+      "type": "SqlDataNode",
+      "database": {
+        "ref": "mysql"
+      }
+    },
+    {
+      "id": "sqlserverQueryActivityInit",
+      "name": "sqlserverQueryActivityInit",
+      "workerGroup" : "orclcopy", 
+      "type": "SqlActivity",
+      "script": "if not exists (select * from sysdatabases where name='test841') create database test841;",
+      "database": {
+        "ref": "sqlserver"
+      }
+    },
+    {
+      "id": "sqlserverQueryActivity",
+      "name": "sqlserverQueryActivity",
+      "workerGroup" : "orclcopy", 
+      "type": "SqlActivity",
+      "script": "use test841; if exists (select * from sysobjects where name='testcopy' and xtype='U') drop table testcopy ;  create table testcopy (col1 varchar(64), col2 varchar(64))",
+      "database": {
+        "ref": "sqlserver"
+      },
+      "dependsOn" : { 
+        "ref" : "sqlserverQueryActivityInit"
+      }  
+    },
+    {
+      "id": "postgres",
+      "region": "us-east-1",
+      "username": "user",
+      "name": "postgres",
+      "*password": "****",
+      "type": "RdsDatabase",
+      "rdsInstanceId": "rdsinstance-postgres"
+    },
+    {
+      "id": "SqlDataNodePostgres",
+      "insertQuery": "insert into #{table} values (?,?)",
+      "name": "SqlDataNodePostgres",
+      "table": "testcopy",
+      "selectQuery": "select * from #{table}",
+      "type": "SqlDataNode",
+      "database": {
+        "ref": "postgres"
+      }
+    },
+    {
+      "region": "us-east-1",
+      "terminateAfter": "30 minutes",
+      "id": "Resource",
+      "name": "Resource",
+      "maximumRetries": "0",
+      "logUri": "s3://log-bucket/",
+      "actionOnTaskFailure": "terminate",
+      "type": "Ec2Resource",
+      "actionOnResourceFailure": "retrynone"
+    },
+    {
+      "id": "mysql",
+      "region": "us-east-1",
+      "username": "user",
+      "name": "mysql",
+      "*password": "****",
+      "jdbcProperties": "allowMultiQueries=true",
+      "type": "RdsDatabase",
+      "rdsInstanceId": "rds-mysql"
+    },
+    {
+      "id": "OracleToPostgres",
+      "input": {
+        "ref": "SqlDataNodeOracle"
+      },
+      "name": "OracleToPostgres",
+      "workerGroup" : "orclcopy",	
+      "output": {
+        "ref": "SqlDataNodePostgres"
+      },
+      "dependsOn": [
+        {
+          "ref": "MysqlToOracle"
+        },
+        {
+          "ref": "postgresQueryActivity"
+        }
+      ],
+      "type": "CopyActivity"
+    },
+    {
+      "id": "DefaultSchedule1",
+      "occurrences": "1",
+      "name": "DefaultSchedule1",
+      "startAt": "FIRST_ACTIVATION_DATE_TIME",
+      "period": "1 day",
+      "type": "Schedule"
+    },
+    {
+      "region": "us-east-1",
+      "id": "sqlserver",
+      "username": "user",
+      "jdbcDriverJarUri": "s3://setl-integrationtest-rds/sqljdbc4.jar",
+      "name": "sqlserver",
+      "*password": "****",
+      "type": "RdsDatabase",
+      "rdsInstanceId": "rds-sqlserver"
+    },
+    {
+      "id": "postgresQueryActivity",
+      "name": "postgresQueryActivity",
+      "workerGroup" : "orclcopy",
+      "type": "SqlActivity",
+      "script": "drop table if exists testcopy; create table testcopy (col1 varchar(64), col2 varchar(64))",
+      "database": {
+        "ref": "postgres"
+      }
+    },
+    {
+      "id": "oracleQueryActivity",
+      "name": "oracleQueryActivity",
+      "workerGroup" : "orclcopy",	
+      "type": "SqlActivity",
+      "script": "declare  v_counter int; begin  select count(*) into v_counter from all_tables where upper(TABLE_NAME)=upper('testcopy'); if v_counter > 0 then execute immediate 'drop table testcopy'; end if;   execute immediate 'create table testcopy (col1 varchar(64), col2 varchar(64))'; end; ",
+      "database": {
+        "ref": "oracle"
+      }
+    },
+    {
+      "id": "S3ToMysql",
+      "input": {
+        "ref": "S3InputDataNode"
+      },
+      "name": "S3ToMysql", 
+      "workerGroup" : "orclcopy",	 
+      "output": {
+        "ref": "SqlDataNodeMysql"
+      },
+      "type": "CopyActivity",
+      "dependsOn": {
+        "ref": "mysqlQueryActivity"
+      }
+    },
+    {
+      "id": "S3OutputDataNode",
+      "directoryPath": "s3://output-path/",
+      "name": "S3OutputDataNode",
+      "type": "S3DataNode"
+    },
+    {
+      "id": "PostgresToSqlserver",
+      "input": {
+        "ref": "SqlDataNodePostgres"
+      },
+      "name": "PostgresToSqlserver",
+      "workerGroup" : "orclcopy",	
+      "dependsOn": [
+        {
+          "ref": "OracleToPostgres"
+        },
+        {
+          "ref": "sqlserverQueryActivity"
+        }
+      ],
+      "output": {
+        "ref": "SqlDataNodeSqlserver"
+      },
+      "type": "CopyActivity"
+    }
+  ] 
+}
